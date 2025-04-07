@@ -13,11 +13,15 @@ import java.util.List;
 public class MainWindow extends JFrame {
 
     private List<AbstractGeomObject> objekty = new ArrayList<>();
+    private AbstractGeomObject draggedObj = null;
+    private Point lastMousePos = null;
+
     private JToolBar toolBar;
     private JToggleButton btSquare;
     private JToggleButton btCircle;
     private JToggleButton btRectangle;
     private JToggleButton btTriangle;
+    private JToggleButton btMove;
 
     public MainWindow() {
         super("Vektorový editor");
@@ -25,7 +29,7 @@ public class MainWindow extends JFrame {
 
         initTest();
 
-        createToolBare();
+        createToolBar();
 
         GraphPanel panel = new GraphPanel(objekty);
         add(panel, BorderLayout.CENTER);
@@ -59,26 +63,79 @@ public class MainWindow extends JFrame {
 
         });
 
+        panel.addMouseListener(
+            new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        if (btMove.isSelected()) {
+                            for (AbstractGeomObject o : objekty) {
+                                if (o.contains(e.getX(), e.getY())) {
+                                    draggedObj = o;
+                                    lastMousePos = e.getPoint();
+                                    System.out.println(draggedObj + ", " + lastMousePos);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        if (btMove.isSelected()) {
+                            draggedObj = null;
+                            lastMousePos = null;
+                        }
+                    }
+                }
+            }
+        );
+
+        panel.addMouseMotionListener(
+            new MouseAdapter() {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (btMove.isSelected() && draggedObj != null && lastMousePos != null) {
+                        // draggedObj.setPosition(new Point(e.getX(), e.getY()));
+
+                        int moovedX = e.getX() - lastMousePos.x;
+                        int moovedY = e.getY() - lastMousePos.y;
+
+                        Point currentPos = draggedObj.getPosition();
+                        draggedObj.setPosition(new Point(currentPos.x + moovedX, currentPos.y + moovedY));
+
+                        lastMousePos = e.getPoint();
+                        repaint();
+                        // System.out.println("posun o: " + moovedX + ", " + moovedY);
+                    }
+                }
+            }
+        );
+
         setSize(800, 600);
         setLocationRelativeTo(null);
     }
 
-    private void createToolBare() {
+    private void createToolBar() {
         toolBar = new JToolBar(JToolBar.HORIZONTAL);
         add(toolBar, BorderLayout.NORTH);
         btSquare = new JToggleButton("▢");
         btCircle = new JToggleButton("○");
         btRectangle = new JToggleButton("▭");
         btTriangle = new JToggleButton("△");
+        btMove = new JToggleButton("⇱");
         toolBar.add(btSquare);
         toolBar.add(btCircle);
         toolBar.add(btRectangle);
         toolBar.add(btTriangle);
+        toolBar.add(btMove);
         ButtonGroup group = new ButtonGroup();
         group.add(btSquare);
         group.add(btCircle);
         group.add(btRectangle);
         group.add(btTriangle);
+        group.add(btMove);
     }
 
     private void initTest() {
